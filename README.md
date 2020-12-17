@@ -4,6 +4,8 @@ Easily pull data points across Tellor contracts on the Ethereum blockchain.
 
 This is my submitted project for the [Gitcoin GR8 Hackaton](https://gitcoin.co/issue/tellor-io/usingtellor/29/100024322)
 
+[![Demo Video](https://img.youtube.com/vi/HZfaz6uLmBc/0.jpg)](https://www.youtube.com/watch?v=HZfaz6uLmBc)
+
 ## Submit a data point to Tellor using Hardhat
 ```bash
 cd ./TellorSubmit
