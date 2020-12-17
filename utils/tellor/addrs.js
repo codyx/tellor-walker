@@ -1,0 +1,14 @@
+const TELLOR_ADDRS = {
+  oracle: {
+    homestead: '0x0ba45a8b5d5575935b8158a88c631e9f9c95a2e5', // Mainnet
+    rinkeby: '0xFe41Cb708CD98C5B20423433309E55b53F79134a',
+  },
+  playground: {
+    rinkeby: '0x20374E579832859f180536A69093A126Db1c8aE9',
+    kovan: '0x20374E579832859f180536A69093A126Db1c8aE9',
+    ropsten: '0x20374E579832859f180536A69093A126Db1c8aE9',
+    goerli: '0x20374E579832859f180536A69093A126Db1c8aE9',
+  },
+};
+
+export default TELLOR_ADDRS;
