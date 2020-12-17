@@ -89,8 +89,11 @@ const DataPointsList = ({ DataPoints, setDataPoints }) => {
       window.localStorage.setItem('customDataPoints', JSON.stringify(dedupNewPointsArr));
     }
     setInputValue('');
-    setCheckedList([...checkedList, inputValue]);
+    const newList = [...checkedList, inputValue];
+    setCheckedList(newList);
     setTags([...tags, inputValue]);
+    // Update Data Points to fetch
+    setDataPoints(newList.map((x) => parseInt(x, 10)));
   };
 
   const deleteTag = (e, tag) => {
@@ -102,15 +105,34 @@ const DataPointsList = ({ DataPoints, setDataPoints }) => {
       // console.log('new arrWithoutTag after', arrWithoutTag);
       window.localStorage.setItem('customDataPoints', JSON.stringify(arrWithoutTag));
       setTags(arrWithoutTag);
-      setCheckedList(checkedList.filter((val) => val.toString() !== tag.toString()));
+      const newList = checkedList.filter((val) => val.toString() !== tag.toString());
+      setCheckedList(newList);
+      // Update Data Points to fetch
+      setDataPoints(newList.map((x) => parseInt(x, 10)));
     } else e.preventDefault();
+  };
+
+  const unSelectAll = (e) => {
+    setCheckedList([]);
+    setIndeterminate(false);
+    setCheckAll(e.target.checked);
+
+    if (DataPoints !== []) { setDataPoints([]); }
   };
 
   return (
     <>
-      <Checkbox indeterminate={indeterminate} onChange={onCheckAllChange} checked={checkAll}>
-        Select all
-      </Checkbox>
+      {
+        (checkedList.length < plainOptions.length) ? (
+          <Checkbox indeterminate={indeterminate} onChange={onCheckAllChange} checked={checkAll}>
+            Select all
+          </Checkbox>
+        ) : (
+          <Checkbox indeterminate={indeterminate} onChange={unSelectAll} checked={checkAll}>
+            Unselect all
+          </Checkbox>
+        )
+      }
       <Divider />
       <CheckboxGroup options={plainOptions} value={checkedList} onChange={onChange} />
       <Divider />
