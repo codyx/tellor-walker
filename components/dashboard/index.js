@@ -8,6 +8,7 @@ import indexes from '../../utils/tellor/indexes';
 import TELLOR_ADDRS from '../../utils/tellor/addrs';
 import { medianAt } from '../../utils/helpers';
 import columns from './columns';
+import styles from '../../styles/Home.module.css';
 
 const { TabPane } = Tabs;
 
@@ -15,14 +16,18 @@ const MAX_TIMESTAMPS_TO_RETRIEVE = 5;
 const GRANULARITY = 1000000;
 let tellorContract;
 
-const Dashboard = () => {
+const INFURA_PROJECT_ID = process.env.NEXT_APP_INFURA_PROJECT_ID || 'ac734d77ecd944818d068489efa4758e'; // Replace by yours
+
+const Dashboard = ({ DataPoints = [] }) => {
+  // console.log('Dashboard data points', DataPoints);
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [network, setNetwork] = useState('oracle');
+  const [networkType, setNetworkType] = useState('homestead');
 
-  const initTellor = (async (address, network) => {
-    console.log('initTellor', address, network);
-    // const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const infuraProvider = new ethers.providers.InfuraProvider(network, '931d4c1f23114993a7f4eeac8a7922fb');
+  const initTellor = (async (address, n) => {
+    console.log('initTellor', address, n);
+    const infuraProvider = new ethers.providers.InfuraProvider(n, INFURA_PROJECT_ID);
     const abi = [
       'function getNewValueCountbyRequestId(uint256 _requestId) public view returns(uint)',
       'function getTimestampbyRequestIDandIndex(uint256 _requestId, uint256 index) public view returns(uint256)',
@@ -31,7 +36,7 @@ const Dashboard = () => {
     tellorContract = new ethers.Contract(
       address,
       abi,
-      infuraProvider, // or provider.getSigner(0)
+      infuraProvider,
     );
   });
 
@@ -49,7 +54,6 @@ const Dashboard = () => {
       const ts = await tellorContract.getTimestampbyRequestIDandIndex(tellorId, idx);
       // eslint-disable-next-line no-await-in-loop
       const value = await tellorContract.retrieveData(tellorId, ts);
-      // console.log('value =>', value.toString())
       const transformedValue = tellorId < indexes.length
         ? (parseFloat(value.toString()) / GRANULARITY) : parseFloat(value.toString());
       values.push({ idx, ts, value: transformedValue });
@@ -61,14 +65,7 @@ const Dashboard = () => {
   };
 
   const fetchDataPoints = async () => {
-    // const dataPoints = [1, 2019];  // ETHUSD (official) and COVID19 (unofficial)
-    // const dataPoints = [1, 2, 3, 4, 5];  // ETHUSD, BTCUSD, BNB/USD, BTC/USD 24h, ETH/BTC
-    const dataPoints = [];
-    for (let p = 0; p < indexes.length; ++p) {
-      dataPoints.push(p + 1);
-    }
-    dataPoints.push(2019); // COVID19 tracker
-    const promises = dataPoints.map((dp) => fetchDataPoint(dp));
+    const promises = DataPoints.map((dp) => fetchDataPoint(dp));
     const results = await Promise.allSettled(promises);
     const newDataSource = [];
     results
@@ -78,7 +75,6 @@ const Dashboard = () => {
           tellorId, count, values, lastValue,
         },
       }, idx) => {
-        // console.log('values',  lastValue);
         const flatValues = values.map(({ value }) => value);
         newDataSource.push({
           tellorId,
@@ -92,27 +88,27 @@ const Dashboard = () => {
           avg: flatValues.reduce((acc, cur) => acc + cur, 0) / flatValues.length,
         });
       });
-    // console.log('newDataSource', newDataSource);
     setDataSource(newDataSource);
     setLoading(false);
   };
 
-  const init = async (network = 'oracle', networkType = 'homestead') => {
-    console.log('Using network', network);
-    console.log('Using networkType', networkType);
-    const addr = TELLOR_ADDRS[network][networkType];
-    await initTellor(addr, networkType);
+  const init = async (n, t) => {
+    console.log(`Using network ${n} and networkType ${t}`);
+    const addr = TELLOR_ADDRS[n][t];
+    await initTellor(addr, t);
     await fetchDataPoints();
   };
 
   useEffect(() => {
-    init();
-  }, []);
+    init(network, networkType);
+  }, [DataPoints]);
 
   const onChange = async (key) => {
     if (!loading) setLoading(true);
-    const [network, networkType] = key.split('-');
-    await init(network, networkType);
+    const [n, t] = key.split('-');
+    setNetwork(n);
+    setNetworkType(t);
+    await init(n, t);
   };
 
   const onClick = async () => {
@@ -121,11 +117,11 @@ const Dashboard = () => {
   };
 
   return (
-    <>
+    <main className={styles.main}>
       <PageHeader
         onBack={() => {}}
-        title="Tellor.io"
-        subTitle="Data Points Visualizer"
+        title="Tellor Walker"
+        subTitle="Data Points Visualizer for tellor.io"
         backIcon={false}
       />
       <Tabs defaultActiveKey="oracle-homestead" onChange={onChange} size="large" centered>
@@ -157,7 +153,7 @@ const Dashboard = () => {
         loading={loading}
         style={{ marginBottom: 15 }}
       />
-    </>
+    </main>
   );
 };
 
